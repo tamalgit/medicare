@@ -58,9 +58,9 @@ export const Cart = () => {
                             <div className="flex-1">
                                 <h3 className="font-semibold text-slate-900 text-lg">{item.name}</h3>
                                 <div className="flex items-center gap-3 mt-1">
-                                    <span className="font-bold text-slate-900">₹{item.price}</span>
+                                    <span className="font-bold text-slate-900">₹{Number(item.price).toFixed(2)}</span>
                                     {item.mrp > item.price && (
-                                        <span className="text-sm text-slate-400 line-through">₹{item.mrp}</span>
+                                        <span className="text-sm text-slate-400 line-through">₹{Number(item.mrp).toFixed(2)}</span>
                                     )}
                                 </div>
                                 {item.prescription_required && (
@@ -105,7 +105,7 @@ export const Cart = () => {
                         <div className="space-y-4 text-slate-600 mb-6 border-b border-slate-200 pb-6">
                             <div className="flex justify-between">
                                 <span>Item Total (MRP)</span>
-                                <span>₹{cartTotal}</span>
+                                <span>₹{Number(cartTotal).toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span>Delivery Charge</span>
@@ -118,7 +118,7 @@ export const Cart = () => {
                         
                         <div className="flex justify-between items-center mb-8">
                             <span className="text-lg font-bold text-slate-900">To Pay</span>
-                            <span className="text-2xl font-bold text-slate-900">₹{totalPayable}</span>
+                            <span className="text-2xl font-bold text-slate-900">₹{Number(totalPayable).toFixed(2)}</span>
                         </div>
 
                         <button 

@@ -32,7 +32,7 @@ export const getInventory = async (req: AuthRequest, res: Response, next: NextFu
 export const updateStock = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const userId = req.user.id;
-        const { medicineId, batchId: inputBatchId, quantity, transactionType, remarks, batchNumber, expiryDate } = req.body;
+        const { medicineId, batchId: inputBatchId, quantity, transactionType, remarks, batchNumber, expiryDate, inventoryId: inputInventoryId, sku } = req.body;
 
         // Get pharmacy ID
         const pharmacyResult = await query('SELECT id FROM pharmacies WHERE user_id = $1', [userId]);
@@ -43,13 +43,21 @@ export const updateStock = async (req: AuthRequest, res: Response, next: NextFun
 
         await query('BEGIN');
 
+        if (sku) {
+            await query('UPDATE medicines SET sku = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [sku, medicineId]);
+        }
+
         let finalBatchId = inputBatchId || null;
 
-        if (batchNumber && expiryDate) {
+        if (batchNumber || expiryDate) {
             // Check if batch exists
             const batchRes = await query('SELECT id FROM medicine_batches WHERE medicine_id = $1 AND batch_number = $2', [medicineId, batchNumber]);
             if (batchRes.rows.length > 0) {
                 finalBatchId = batchRes.rows[0].id;
+                // Update expiry date if needed
+                if (expiryDate) {
+                     await query('UPDATE medicine_batches SET expiry_date = $1 WHERE id = $2', [expiryDate, finalBatchId]);
+                }
             } else {
                 const newBatch = await query(
                     'INSERT INTO medicine_batches (medicine_id, batch_number, expiry_date) VALUES ($1, $2, $3) RETURNING id',
@@ -59,26 +67,45 @@ export const updateStock = async (req: AuthRequest, res: Response, next: NextFun
             }
         }
 
-        // Check if inventory record exists
-        let invResult = await query('SELECT id, quantity FROM inventory WHERE pharmacy_id = $1 AND medicine_id = $2 AND batch_id IS NOT DISTINCT FROM $3', 
-            [pharmacyId, medicineId, finalBatchId]);
+        let inventoryId = inputInventoryId;
 
-        let inventoryId;
-        if (invResult.rows.length === 0) {
-            // Create new inventory record
-            const newInv = await query('INSERT INTO inventory (pharmacy_id, medicine_id, batch_id, quantity) VALUES ($1, $2, $3, $4) RETURNING id', 
-                [pharmacyId, medicineId, finalBatchId, quantity]);
-            inventoryId = newInv.rows[0].id;
+        if (inventoryId) {
+            // Updating a specific row
+            const invResult = await query('SELECT id, quantity FROM inventory WHERE id = $1 AND pharmacy_id = $2', [inventoryId, pharmacyId]);
+            if (invResult.rows.length > 0) {
+                const currentQty = invResult.rows[0].quantity;
+                let newQty = currentQty;
+                
+                if (transactionType === 'IN') newQty += quantity;
+                else if (transactionType === 'OUT') newQty -= quantity;
+                else if (transactionType === 'ADJUSTMENT') newQty = quantity;
+
+                // Update quantity and also update batch_id if it changed
+                await query('UPDATE inventory SET quantity = $1, batch_id = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3', [newQty, finalBatchId, inventoryId]);
+            } else {
+                throw new Error('Inventory record not found');
+            }
         } else {
-            inventoryId = invResult.rows[0].id;
-            const currentQty = invResult.rows[0].quantity;
-            let newQty = currentQty;
-            
-            if (transactionType === 'IN') newQty += quantity;
-            else if (transactionType === 'OUT') newQty -= quantity;
-            else if (transactionType === 'ADJUSTMENT') newQty = quantity; // Absolute set
+            // Fallback for when no inventoryId is provided (e.g. from a different flow)
+            let invResult = await query('SELECT id, quantity FROM inventory WHERE pharmacy_id = $1 AND medicine_id = $2 AND batch_id IS NOT DISTINCT FROM $3', 
+                [pharmacyId, medicineId, finalBatchId]);
 
-            await query('UPDATE inventory SET quantity = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [newQty, inventoryId]);
+            if (invResult.rows.length === 0) {
+                // Create new inventory record
+                const newInv = await query('INSERT INTO inventory (pharmacy_id, medicine_id, batch_id, quantity) VALUES ($1, $2, $3, $4) RETURNING id', 
+                    [pharmacyId, medicineId, finalBatchId, quantity]);
+                inventoryId = newInv.rows[0].id;
+            } else {
+                inventoryId = invResult.rows[0].id;
+                const currentQty = invResult.rows[0].quantity;
+                let newQty = currentQty;
+                
+                if (transactionType === 'IN') newQty += quantity;
+                else if (transactionType === 'OUT') newQty -= quantity;
+                else if (transactionType === 'ADJUSTMENT') newQty = quantity;
+
+                await query('UPDATE inventory SET quantity = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [newQty, inventoryId]);
+            }
         }
 
         // Record transaction

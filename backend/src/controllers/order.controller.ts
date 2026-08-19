@@ -114,6 +114,13 @@ export const createOrder = async (req: AuthRequest, res: Response, next: NextFun
 
         await query('COMMIT');
 
+        try {
+            const { getIO } = require('../sockets');
+            getIO().emit('new_order', { orderId });
+        } catch (socketErr) {
+            console.error('Socket emit failed:', socketErr);
+        }
+
         res.status(201).json({
             success: true,
             message: 'Order created successfully',
@@ -131,6 +138,68 @@ export const getCustomerOrders = async (req: AuthRequest, res: Response, next: N
         const customerId = req.user.id;
         const result = await query('SELECT * FROM orders WHERE customer_id = $1 ORDER BY created_at DESC', [customerId]);
         res.status(200).json({ success: true, data: result.rows });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getOrderById = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+        const user = req.user;
+
+        // Fetch Order
+        let orderQuery = 'SELECT * FROM orders WHERE id = $1';
+        let queryParams: any[] = [id];
+
+        if (user.role === 'CUSTOMER') {
+            orderQuery += ' AND customer_id = $2';
+            queryParams.push(user.id);
+        }
+
+        const orderRes = await query(orderQuery, queryParams);
+        if (orderRes.rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+        const order = orderRes.rows[0];
+
+        // Fetch Order Items with Medicine details
+        const itemsRes = await query(`
+            SELECT oi.*, m.name as medicine_name, m.sku 
+            FROM order_items oi
+            JOIN medicines m ON oi.medicine_id = m.id
+            WHERE oi.order_id = $1
+        `, [id]);
+
+        // Fetch Address
+        let address = null;
+        if (order.address_id) {
+            const addrRes = await query('SELECT * FROM customer_addresses WHERE id = $1', [order.address_id]);
+            if (addrRes.rows.length > 0) address = addrRes.rows[0];
+        }
+
+        // Fetch Payment
+        let payment = null;
+        const payRes = await query('SELECT * FROM payments WHERE order_id = $1 ORDER BY created_at DESC LIMIT 1', [id]);
+        if (payRes.rows.length > 0) payment = payRes.rows[0];
+
+        // Fetch Customer Details
+        let customer = null;
+        if (order.customer_id) {
+            const userRes = await query('SELECT id, first_name, last_name, mobile, email FROM users WHERE id = $1', [order.customer_id]);
+            if (userRes.rows.length > 0) customer = userRes.rows[0];
+        }
+
+        res.status(200).json({ 
+            success: true, 
+            data: {
+                ...order,
+                customer,
+                items: itemsRes.rows,
+                address,
+                payment
+            } 
+        });
     } catch (error) {
         next(error);
     }

@@ -11,6 +11,7 @@ export const Inventory = () => {
     const [action, setAction] = useState<'IN' | 'OUT'>('IN');
     const [batchNumber, setBatchNumber] = useState('');
     const [expiryDate, setExpiryDate] = useState('');
+    const [sku, setSku] = useState('');
 
     const openModal = (item: any) => {
         setSelectedItem(item);
@@ -18,6 +19,7 @@ export const Inventory = () => {
         setAction('IN');
         setBatchNumber(item.batch_number || '');
         setExpiryDate(item.expiry_date ? new Date(item.expiry_date).toISOString().split('T')[0] : '');
+        setSku(item.sku || '');
     };
 
     const { data: inventory, isLoading } = useQuery({
@@ -39,10 +41,12 @@ export const Inventory = () => {
         if (!selectedItem || !updateQty) return;
         
         mutation.mutate({
+            inventoryId: selectedItem.id,
             medicineId: selectedItem.medicine_id,
             batchId: selectedItem.batch_id,
             batchNumber: batchNumber || undefined,
             expiryDate: expiryDate || undefined,
+            sku: sku || undefined,
             quantity: parseInt(updateQty, 10),
             transactionType: action,
             remarks: 'Manual update from dashboard'
@@ -146,6 +150,16 @@ export const Inventory = () => {
                                     className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-healthcare-blue"
                                     value={updateQty}
                                     onChange={(e) => setUpdateQty(e.target.value)}
+                                />
+                            </div>
+                            <div className="mb-6">
+                                <label className="block text-sm font-medium text-slate-700 mb-1">SKU</label>
+                                <input 
+                                    type="text" 
+                                    className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-healthcare-blue"
+                                    value={sku}
+                                    onChange={(e) => setSku(e.target.value)}
+                                    placeholder="e.g. MED-001"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4 mb-6">

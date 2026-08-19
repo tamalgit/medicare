@@ -294,7 +294,7 @@ export const Checkout = () => {
                 <div className="bg-slate-900 text-white rounded-xl p-6 flex flex-col sm:flex-row justify-between items-center shadow-lg">
                     <div className="mb-4 sm:mb-0 text-center sm:text-left">
                         <p className="text-slate-300 text-sm">Total Payable Amount</p>
-                        <p className="text-3xl font-bold">₹{totalPayable}</p>
+                        <p className="text-3xl font-bold">₹{Number(totalPayable).toFixed(2)}</p>
                         <p className="text-xs text-slate-400 mt-1">{cart.length} items • Delivery: ₹{deliveryCharge}</p>
                     </div>
                     <button 

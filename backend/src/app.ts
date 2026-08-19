@@ -10,6 +10,7 @@ import orderRoutes from './routes/order.routes';
 import deliveryRoutes from './routes/delivery.routes';
 import adminRoutes from './routes/admin.routes';
 import userRoutes from './routes/user.routes';
+import pharmacyRoutes from './routes/pharmacy.routes';
 
 dotenv.config();
 
@@ -20,7 +21,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve uploads folder statically
-app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -31,6 +32,7 @@ app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/deliveries', deliveryRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/pharmacy', pharmacyRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

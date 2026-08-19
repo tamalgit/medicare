@@ -102,7 +102,7 @@ export const SearchMedicines = () => {
                                                             <p className="text-xs text-slate-500">{med.manufacturer_name || 'Generic'}</p>
                                                         </div>
                                                         <div className="font-bold text-healthcare-blue">
-                                                            ₹{med.selling_price}
+                                                            ₹{Number(med.selling_price).toFixed(2)}
                                                         </div>
                                                     </Link>
                                                 </li>
@@ -320,11 +320,11 @@ export const SearchMedicines = () => {
                                                 <p className="text-xs text-slate-500 mb-4">{med.manufacturer_name || 'Generic'}</p>
                                                 
                                                 <div className="mt-auto">
-                                                    <div className="flex items-end space-x-2 mb-4">
-                                                        <span className="text-xl font-black text-slate-900">₹{med.selling_price}</span>
+                                                    <div className="flex items-end gap-2 mb-4">
+                                                        <span className="text-xl font-black text-slate-900">₹{Number(med.selling_price).toFixed(2)}</span>
                                                         {med.mrp > med.selling_price && (
                                                             <>
-                                                                <span className="text-sm text-slate-400 line-through pb-0.5">₹{med.mrp}</span>
+                                                                <span className="text-sm text-slate-400 line-through pb-0.5">₹{Number(med.mrp).toFixed(2)}</span>
                                                                 <span className="text-xs font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded pb-0.5">
                                                                     {Math.round(((med.mrp - med.selling_price) / med.mrp) * 100)}% OFF
                                                                 </span>
@@ -374,11 +374,11 @@ export const SearchMedicines = () => {
                                             <p className="text-xs text-slate-500 mb-4">{med.manufacturer_name || 'Generic'}</p>
                                             
                                             <div className="mt-auto">
-                                                <div className="flex items-end space-x-2 mb-4">
-                                                    <span className="text-xl font-black text-slate-900">₹{med.selling_price}</span>
+                                                <div className="flex items-end gap-2 mb-4">
+                                                    <span className="text-xl font-black text-slate-900">₹{Number(med.selling_price).toFixed(2)}</span>
                                                     {med.mrp > med.selling_price && (
                                                         <>
-                                                            <span className="text-sm text-slate-400 line-through pb-0.5">₹{med.mrp}</span>
+                                                            <span className="text-sm text-slate-400 line-through pb-0.5">₹{Number(med.mrp).toFixed(2)}</span>
                                                             <span className="text-xs font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded pb-0.5">
                                                                 {Math.round(((med.mrp - med.selling_price) / med.mrp) * 100)}% OFF
                                                             </span>

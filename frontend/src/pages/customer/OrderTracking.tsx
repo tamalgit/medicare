@@ -2,20 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useSocket } from '../../context/SocketContext';
 import { useQuery } from '@tanstack/react-query';
-import { getMyOrders } from '../../services/orderApi';
-import { MapPin, Navigation, Package, Truck, FileSignature } from 'lucide-react';
+import { getOrderById } from '../../services/orderApi';
+import { MapPin, Navigation, Package, Truck, FileSignature, Receipt, CreditCard, CalendarClock } from 'lucide-react';
 
 export const OrderTracking = () => {
     const { id } = useParams<{ id: string }>(); // This is the order ID
     const { socket, isConnected } = useSocket();
     const [location, setLocation] = useState<{ lat: number, lng: number, timestamp: string } | null>(null);
 
-    const { data: orders } = useQuery({
-        queryKey: ['customer-orders'],
-        queryFn: getMyOrders
+    const { data: order, isLoading } = useQuery({
+        queryKey: ['order-details', id],
+        queryFn: () => getOrderById(id as string),
+        enabled: !!id
     });
-
-    const order = orders?.find((o: any) => o.id === id);
 
     useEffect(() => {
         if (socket && isConnected && id) {
@@ -31,7 +30,10 @@ export const OrderTracking = () => {
         }
     }, [socket, isConnected, id]);
 
-    if (!order) return <div className="p-8 text-center text-slate-500">Loading tracking info...</div>;
+    if (isLoading || !order) return <div className="p-8 text-center text-slate-500">Loading order info...</div>;
+
+    const deliveryDate = new Date(order.created_at);
+    deliveryDate.setDate(deliveryDate.getDate() + 2); // Mock 2 days delivery
 
     return (
         <div className="max-w-4xl mx-auto p-4 md:p-8">
@@ -127,6 +129,121 @@ export const OrderTracking = () => {
                             <p className="text-slate-500">Live tracking will begin once the delivery agent picks up your order and is en route.</p>
                         </div>
                     )}
+                </div>
+            </div>
+
+            {/* Complete Order Details Section */}
+            <div className="mt-8 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="bg-slate-50 border-b border-slate-200 p-6">
+                    <h2 className="text-lg font-bold text-slate-900 flex items-center">
+                        <Receipt className="mr-2 text-healthcare-blue w-5 h-5" /> Complete Order Details
+                    </h2>
+                </div>
+                
+                <div className="p-6 md:p-8">
+                    {/* Items Table */}
+                    <div className="mb-8 overflow-x-auto">
+                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 border-b pb-2">Medicines Ordered</h3>
+                        <table className="w-full text-left border-collapse min-w-[600px]">
+                            <thead>
+                                <tr className="text-xs text-slate-500 uppercase bg-slate-50">
+                                    <th className="p-3 font-semibold rounded-tl-lg">Item</th>
+                                    <th className="p-3 font-semibold">Price</th>
+                                    <th className="p-3 font-semibold text-center">Qty</th>
+                                    <th className="p-3 font-semibold text-right rounded-tr-lg">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {order.items?.map((item: any) => (
+                                    <tr key={item.id} className="hover:bg-slate-50/50">
+                                        <td className="p-3">
+                                            <p className="font-bold text-slate-900">{item.medicine_name}</p>
+                                            <p className="text-xs text-slate-500">SKU: {item.sku || 'N/A'}</p>
+                                        </td>
+                                        <td className="p-3 text-slate-600">₹{Number(item.price).toFixed(2)}</td>
+                                        <td className="p-3 text-center font-medium">{item.quantity}</td>
+                                        <td className="p-3 text-right font-bold text-slate-900">₹{Number(item.price * item.quantity).toFixed(2)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+                        {/* Left Column: Address & Payment */}
+                        <div className="space-y-8">
+                            <div>
+                                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 border-b pb-2 flex items-center">
+                                    <MapPin className="w-4 h-4 mr-2" /> Shipping & Billing Address
+                                </h3>
+                                {order.address ? (
+                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                        <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-[10px] font-bold rounded mb-2">{order.address.type}</span>
+                                        <p className="text-sm text-slate-700 leading-relaxed">
+                                            {order.address.street_address}<br/>
+                                            {order.address.city}, {order.address.state} - {order.address.pincode}
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-slate-500 italic">Address details unavailable.</p>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 border-b pb-2 flex items-center">
+                                        <CreditCard className="w-4 h-4 mr-2" /> Payment
+                                    </h3>
+                                    {order.payment ? (
+                                        <div>
+                                            <p className="text-sm font-bold text-slate-900">{order.payment.payment_method === 'COD' ? 'Cash on Delivery' : order.payment.payment_method}</p>
+                                            <p className={`text-xs font-semibold mt-1 ${order.payment.status === 'SUCCESS' ? 'text-green-600' : 'text-amber-600'}`}>
+                                                Status: {order.payment.status}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-slate-500 italic">Payment info unavailable.</p>
+                                    )}
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 border-b pb-2 flex items-center">
+                                        <CalendarClock className="w-4 h-4 mr-2" /> Delivery
+                                    </h3>
+                                    <p className="text-sm font-bold text-slate-900">{deliveryDate.toLocaleDateString()}</p>
+                                    <p className="text-xs text-slate-500 mt-1">Estimated delivery</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Right Column: Bill Details */}
+                        <div>
+                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 border-b pb-2 flex items-center">
+                                <Receipt className="w-4 h-4 mr-2" /> Bill Summary
+                            </h3>
+                            <div className="bg-slate-50 p-5 rounded-xl border border-slate-100 space-y-3">
+                                <div className="flex justify-between text-sm text-slate-600">
+                                    <span>Subtotal</span>
+                                    <span>₹{Number(order.subtotal).toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between text-sm text-slate-600">
+                                    <span>Discount</span>
+                                    <span className="text-green-600">-₹{Number(order.discount_amount).toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between text-sm text-slate-600">
+                                    <span>Delivery Charge</span>
+                                    <span>{Number(order.delivery_charge) === 0 ? <span className="text-green-600 font-medium">FREE</span> : `₹${Number(order.delivery_charge).toFixed(2)}`}</span>
+                                </div>
+                                <div className="flex justify-between text-sm text-slate-600">
+                                    <span>Taxes</span>
+                                    <span>₹{Number(order.tax_amount).toFixed(2)}</span>
+                                </div>
+                                <div className="border-t border-slate-200 my-3 pt-3 flex justify-between items-center">
+                                    <span className="text-base font-bold text-slate-900">Total Paid</span>
+                                    <span className="text-2xl font-black text-slate-900">₹{Number(order.total_amount).toFixed(2)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

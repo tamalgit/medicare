@@ -6,10 +6,12 @@ export const getInventory = async () => {
 };
 
 export const updateStock = async (data: {
+    inventoryId?: string;
     medicineId: string;
     batchId: string;
     batchNumber?: string;
     expiryDate?: string;
+    sku?: string;
     quantity: number;
     transactionType: 'IN' | 'OUT' | 'ADJUSTMENT';
     remarks?: string;

@@ -10,6 +10,11 @@ export const getMyOrders = async () => {
     return response.data.data;
 };
 
+export const getOrderById = async (id: string) => {
+    const response = await api.get(`/orders/${id}`);
+    return response.data.data;
+};
+
 export const getPharmacyOrders = async () => {
     const response = await api.get('/orders/pharmacy');
     return response.data.data;

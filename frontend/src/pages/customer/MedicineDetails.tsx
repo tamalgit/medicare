@@ -9,8 +9,10 @@ import { useCart } from '../../context/CartContext';
 export const MedicineDetails = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { addToCart } = useCart();
+    const { cart, addToCart } = useCart();
     const [isAdded, setIsAdded] = useState(false);
+    
+    const hasItems = cart.length > 0;
 
     const { data: med, isLoading, error } = useQuery({
         queryKey: ['medicine', id],
@@ -65,10 +67,10 @@ export const MedicineDetails = () => {
                                 </div>
                                 
                                 <div className="flex items-end gap-3 mb-1">
-                                    <span className="text-3xl font-extrabold text-slate-900">₹{med.selling_price}</span>
+                                    <span className="text-3xl font-extrabold text-slate-900">₹{Number(med.selling_price).toFixed(2)}</span>
                                     {discountPercentage > 0 && (
                                         <>
-                                            <span className="text-sm text-slate-400 line-through mb-1">MRP ₹{med.mrp}</span>
+                                            <span className="text-sm text-slate-400 line-through mb-1">MRP ₹{Number(med.mrp).toFixed(2)}</span>
                                             <span className="text-xs font-bold text-white bg-rose-400 px-2 py-0.5 rounded-sm mb-1">{discountPercentage}% OFF</span>
                                         </>
                                     )}
@@ -167,11 +169,13 @@ export const MedicineDetails = () => {
                 {/* RIGHT SIDEBAR COLUMN */}
                 <div className="w-full lg:w-1/3 space-y-6">
                     {/* View Cart Box */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                        <p className="text-sm font-semibold text-slate-600 mb-4">Please add item(s) to proceed</p>
+                    <div className={`bg-white rounded-2xl shadow-sm border p-6 transition-colors ${hasItems ? 'border-healthcare-blue bg-blue-50/30' : 'border-slate-200'}`}>
+                        <p className={`text-sm font-semibold mb-4 ${hasItems ? 'text-healthcare-blue' : 'text-slate-600'}`}>
+                            {hasItems ? `${cart.length} item(s) in your cart. You can now checkout!` : 'Please add item(s) to proceed'}
+                        </p>
                         <button 
                             onClick={() => navigate('/cart')}
-                            className="w-full bg-slate-400 hover:bg-slate-500 text-white font-bold py-3.5 rounded-xl transition-colors flex justify-center items-center shadow-sm"
+                            className={`w-full text-white font-bold py-3.5 rounded-xl transition-colors flex justify-center items-center shadow-sm ${hasItems ? 'bg-healthcare-blue hover:bg-blue-800' : 'bg-slate-400 hover:bg-slate-500'}`}
                         >
                             View Cart <span className="ml-2 font-black text-xl leading-none">›</span>
                         </button>
