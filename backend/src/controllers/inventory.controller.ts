@@ -1,0 +1,95 @@
+import { Response, NextFunction } from 'express';
+import { query } from '../config/database';
+import { AuthRequest } from '../middleware/auth.middleware';
+
+export const getInventory = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user.id;
+        
+        // Find pharmacy associated with this user
+        const pharmacyResult = await query('SELECT id FROM pharmacies WHERE user_id = $1', [userId]);
+        if (pharmacyResult.rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Pharmacy not found for this user' });
+        }
+        
+        const pharmacyId = pharmacyResult.rows[0].id;
+
+        const inventoryResult = await query(`
+            SELECT i.*, m.name as medicine_name, m.sku, b.batch_number, b.expiry_date 
+            FROM inventory i
+            JOIN medicines m ON i.medicine_id = m.id
+            LEFT JOIN medicine_batches b ON i.batch_id = b.id
+            WHERE i.pharmacy_id = $1
+            ORDER BY m.name ASC
+        `, [pharmacyId]);
+
+        res.status(200).json({ success: true, data: inventoryResult.rows });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const updateStock = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user.id;
+        const { medicineId, batchId: inputBatchId, quantity, transactionType, remarks, batchNumber, expiryDate } = req.body;
+
+        // Get pharmacy ID
+        const pharmacyResult = await query('SELECT id FROM pharmacies WHERE user_id = $1', [userId]);
+        if (pharmacyResult.rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Pharmacy not found' });
+        }
+        const pharmacyId = pharmacyResult.rows[0].id;
+
+        await query('BEGIN');
+
+        let finalBatchId = inputBatchId || null;
+
+        if (batchNumber && expiryDate) {
+            // Check if batch exists
+            const batchRes = await query('SELECT id FROM medicine_batches WHERE medicine_id = $1 AND batch_number = $2', [medicineId, batchNumber]);
+            if (batchRes.rows.length > 0) {
+                finalBatchId = batchRes.rows[0].id;
+            } else {
+                const newBatch = await query(
+                    'INSERT INTO medicine_batches (medicine_id, batch_number, expiry_date) VALUES ($1, $2, $3) RETURNING id',
+                    [medicineId, batchNumber, expiryDate]
+                );
+                finalBatchId = newBatch.rows[0].id;
+            }
+        }
+
+        // Check if inventory record exists
+        let invResult = await query('SELECT id, quantity FROM inventory WHERE pharmacy_id = $1 AND medicine_id = $2 AND batch_id IS NOT DISTINCT FROM $3', 
+            [pharmacyId, medicineId, finalBatchId]);
+
+        let inventoryId;
+        if (invResult.rows.length === 0) {
+            // Create new inventory record
+            const newInv = await query('INSERT INTO inventory (pharmacy_id, medicine_id, batch_id, quantity) VALUES ($1, $2, $3, $4) RETURNING id', 
+                [pharmacyId, medicineId, finalBatchId, quantity]);
+            inventoryId = newInv.rows[0].id;
+        } else {
+            inventoryId = invResult.rows[0].id;
+            const currentQty = invResult.rows[0].quantity;
+            let newQty = currentQty;
+            
+            if (transactionType === 'IN') newQty += quantity;
+            else if (transactionType === 'OUT') newQty -= quantity;
+            else if (transactionType === 'ADJUSTMENT') newQty = quantity; // Absolute set
+
+            await query('UPDATE inventory SET quantity = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [newQty, inventoryId]);
+        }
+
+        // Record transaction
+        await query('INSERT INTO inventory_transactions (inventory_id, transaction_type, quantity_changed, remarks, created_by) VALUES ($1, $2, $3, $4, $5)', 
+            [inventoryId, transactionType, quantity, remarks, userId]);
+
+        await query('COMMIT');
+
+        res.status(200).json({ success: true, message: 'Stock updated successfully' });
+    } catch (error) {
+        await query('ROLLBACK');
+        next(error);
+    }
+};
