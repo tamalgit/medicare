@@ -8,6 +8,7 @@ export const MyDeliveries = () => {
     const [selectedDelivery, setSelectedDelivery] = useState<any>(null);
     const [newStatus, setNewStatus] = useState<string>('');
     const [notes, setNotes] = useState('');
+    const [otp, setOtp] = useState('');
 
     const { data: deliveries, isLoading } = useQuery({
         queryKey: ['agent-deliveries'],
@@ -15,17 +16,18 @@ export const MyDeliveries = () => {
     });
 
     const updateMutation = useMutation({
-        mutationFn: (data: any) => updateDeliveryStatus(selectedDelivery.id, data.status, data.notes),
+        mutationFn: (data: any) => updateDeliveryStatus(selectedDelivery.id, data.status, data.notes, data.otp),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['agent-deliveries'] });
             setSelectedDelivery(null);
             setNotes('');
+            setOtp('');
         }
     });
 
     const handleUpdate = (e: React.FormEvent) => {
         e.preventDefault();
-        updateMutation.mutate({ status: newStatus, notes });
+        updateMutation.mutate({ status: newStatus, notes, otp });
     };
 
     if (isLoading) return <div className="p-8 text-center text-slate-500 font-medium">Loading your deliveries...</div>;
@@ -162,10 +164,28 @@ export const MyDeliveries = () => {
                                     placeholder="Enter reason for failure, who received it, etc..."
                                 />
                             </div>
+                            {newStatus === 'DELIVERED' && (
+                                <div className="mb-6">
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Delivery Code (OTP)</label>
+                                    <input 
+                                        type="text"
+                                        required
+                                        maxLength={6}
+                                        className="w-full border border-slate-300 rounded-lg p-3 font-mono text-center tracking-widest focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none"
+                                        value={otp}
+                                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                                        placeholder="000000"
+                                    />
+                                    <p className="text-xs text-slate-500 mt-1">Ask the customer for the 6-digit code sent to their email/SMS.</p>
+                                </div>
+                            )}
                             <div className="flex gap-3 justify-end pt-2 border-t border-slate-100">
                                 <button 
                                     type="button" 
-                                    onClick={() => setSelectedDelivery(null)}
+                                    onClick={() => {
+                                        setSelectedDelivery(null);
+                                        setOtp('');
+                                    }}
                                     className="px-5 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-bold transition-colors"
                                 >
                                     Cancel

@@ -30,6 +30,7 @@ import { PharmacyLogin } from './pages/pharmacy/auth/PharmacyLogin';
 import { PharmacyDashboard } from './pages/pharmacy/Dashboard';
 import { PharmacyLayout } from './layouts/PharmacyLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { RoleRedirect } from './components/RoleRedirect';
 
 function App() {
   return (
@@ -40,7 +41,7 @@ function App() {
             <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-blue-100 selection:text-blue-900">
               <Routes>
                 {/* Pharmacy Auth Route (Standalone) */}
-                <Route path="/pharmacy/login" element={<PharmacyLogin />} />
+                <Route path="/pharmacy/login" element={<RoleRedirect><PharmacyLogin /></RoleRedirect>} />
 
                 {/* Pharmacy Portal Routes (Wrapped in PharmacyLayout) */}
                 <Route path="/pharmacy" element={<ProtectedRoute allowedRoles={['PHARMACY_ADMIN', 'PHARMACIST', 'SUPER_ADMIN']}><PharmacyLayout /></ProtectedRoute>}>
@@ -66,28 +67,30 @@ function App() {
 
                 {/* Main Website Routes (Wrapped in Navbar/Footer) */}
                 <Route path="/*" element={
-                  <>
-                    <Navbar />
-                    <Routes>
-                      {/* Public Routes */}
-                      <Route path="/" element={<SearchMedicines />} />
-                      <Route path="/medicines/:id" element={<MedicineDetails />} />
-                      <Route path="/lab-tests" element={<LabTests />} />
-                      <Route path="/healthcare" element={<Healthcare />} />
-                      <Route path="/login" element={<Login />} />
-                      <Route path="/register" element={<Register />} />
+                  <RoleRedirect>
+                    <>
+                      <Navbar />
+                      <Routes>
+                        {/* Public Routes */}
+                        <Route path="/" element={<SearchMedicines />} />
+                        <Route path="/medicines/:id" element={<MedicineDetails />} />
+                        <Route path="/lab-tests" element={<LabTests />} />
+                        <Route path="/healthcare" element={<Healthcare />} />
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
 
-                      {/* Customer Authenticated Routes */}
-                      <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
-                      <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-                      <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
-                      <Route path="/orders/:id/track" element={<ProtectedRoute><OrderTracking /></ProtectedRoute>} />
-                      <Route path="/customer/prescriptions/upload" element={<ProtectedRoute><PrescriptionUpload /></ProtectedRoute>} />
+                        {/* Customer Authenticated Routes */}
+                        <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+                        <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+                        <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+                        <Route path="/orders/:id/track" element={<ProtectedRoute><OrderTracking /></ProtectedRoute>} />
+                        <Route path="/customer/prescriptions/upload" element={<ProtectedRoute><PrescriptionUpload /></ProtectedRoute>} />
 
-                      {/* Removed old delivery routes from here */}
-                    </Routes>
-                    <Footer />
-                  </>
+                        {/* Removed old delivery routes from here */}
+                      </Routes>
+                      <Footer />
+                    </>
+                  </RoleRedirect>
                 } />
               </Routes>
             </div>

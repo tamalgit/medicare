@@ -236,6 +236,20 @@ export const verifyPrescription = async (req: AuthRequest, res: Response, next: 
                     "INSERT INTO order_status_history (order_id, status, remarks, created_by) VALUES ($1, 'READY_TO_SHIP', 'Prescription Approved & Inventory Reserved', $2)",
                     [orderId, pharmacistId]
                 );
+                
+                // Auto-Assign Delivery Agent
+                const agentRes = await query("SELECT id FROM delivery_agents WHERE is_active = true LIMIT 1");
+                if (agentRes.rows.length > 0) {
+                    const agentId = agentRes.rows[0].id;
+                    const existingAssigned = await query('SELECT id FROM deliveries WHERE order_id = $1', [orderId]);
+                    if (existingAssigned.rows.length === 0) {
+                        await query('INSERT INTO deliveries (order_id, agent_id, status) VALUES ($1, $2, $3)', [orderId, agentId, 'ASSIGNED']);
+                        await query(
+                            "INSERT INTO order_status_history (order_id, status, remarks, created_by) VALUES ($1, 'READY_TO_SHIP', $2, $3)",
+                            [orderId, `Assigned to Delivery Agent ID: ${agentId}`, pharmacistId]
+                        );
+                    }
+                }
             }
         } else if (action === 'REJECTED') {
             // Find linked orders and cancel them

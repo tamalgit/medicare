@@ -10,7 +10,7 @@ export const getMyDeliveries = async () => {
     return response.data.data;
 };
 
-export const updateDeliveryStatus = async (id: string, status: string, notes?: string) => {
-    const response = await api.patch(`/deliveries/deliveries/${id}/status`, { status, notes });
+export const updateDeliveryStatus = async (id: string, status: string, notes?: string, otp?: string) => {
+    const response = await api.patch(`/deliveries/deliveries/${id}/status`, { status, notes, otp });
     return response.data;
 };
