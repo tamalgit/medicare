@@ -57,7 +57,11 @@ export const getDashboardStats = async (req: AuthRequest, res: Response, next: N
 export const getUsersList = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const result = await query(
-            'SELECT id, first_name, last_name, email, role, is_active, created_at FROM users ORDER BY created_at DESC'
+            `SELECT u.id, u.first_name, u.last_name, u.email, r.name as role, u.is_active, u.created_at 
+             FROM users u
+             LEFT JOIN user_roles ur ON u.id = ur.user_id 
+             LEFT JOIN roles r ON ur.role_id = r.id
+             ORDER BY u.created_at DESC`
         );
         res.status(200).json({ success: true, data: result.rows });
     } catch (error) {
@@ -70,13 +74,26 @@ export const updateUserRole = async (req: AuthRequest, res: Response, next: Next
         const { id } = req.params;
         const { role, is_active } = req.body;
 
-        await query(
-            'UPDATE users SET role = COALESCE($1, role), is_active = COALESCE($2, is_active) WHERE id = $3',
-            [role, is_active, id]
-        );
+        await query('BEGIN');
+
+        if (is_active !== undefined) {
+            await query('UPDATE users SET is_active = $1 WHERE id = $2', [is_active, id]);
+        }
+
+        if (role) {
+            const roleResult = await query('SELECT id FROM roles WHERE name = $1', [role]);
+            if (roleResult.rows.length > 0) {
+                const roleId = roleResult.rows[0].id;
+                await query('DELETE FROM user_roles WHERE user_id = $1', [id]);
+                await query('INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)', [id, roleId]);
+            }
+        }
+
+        await query('COMMIT');
 
         res.status(200).json({ success: true, message: 'User updated successfully' });
     } catch (error) {
+        await query('ROLLBACK');
         next(error);
     }
 };
