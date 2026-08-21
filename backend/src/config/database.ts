@@ -1,4 +1,4 @@
-﻿import { Pool } from 'pg';
+import { Pool } from 'pg';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -7,6 +7,13 @@ const isLocal =
   process.env.DATABASE_URL
     ? process.env.DATABASE_URL.includes('localhost')
     : (process.env.PGHOST || '').includes('localhost');
+
+if (!process.env.DATABASE_URL && !process.env.PGHOST) {
+    console.error('FATAL ERROR: No database connection details found in environment variables!');
+    console.error('Please set either DATABASE_URL or PGHOST/PGUSER/PGPASSWORD/PGDATABASE in your Render Dashboard.');
+    process.exit(1);
+}
+
 
 export const pool = new Pool(
   process.env.DATABASE_URL
