@@ -44,7 +44,7 @@ const frontendBuildPath = path.join(__dirname, '../../frontend/dist');
 app.use(express.static(frontendBuildPath));
 
 // Catch-all route to serve the React app for any other URL (client-side routing)
-app.get('*', (req, res, next) => {
+app.get(/(.*)/, (req, res, next) => {
     if (req.url.startsWith('/api')) {
         return next();
     }
