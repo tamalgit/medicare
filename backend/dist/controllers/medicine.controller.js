@@ -54,8 +54,14 @@ const addMedicine = async (req, res, next) => {
                 const allPharmacies = await (0, database_1.query)('SELECT id FROM pharmacies');
                 pharmaciesToAdd = allPharmacies.rows.map(row => row.id);
             }
-            for (const pId of pharmaciesToAdd) {
-                await (0, database_1.query)('INSERT INTO inventory (pharmacy_id, medicine_id, quantity) VALUES ($1, $2, $3)', [pId, newMedicine.id, 0]);
+            if (pharmaciesToAdd.length === 0) {
+                // No pharmacies exist in the DB. Add a global inventory record with NULL pharmacy_id.
+                await (0, database_1.query)('INSERT INTO inventory (pharmacy_id, medicine_id, quantity) VALUES ($1, $2, $3)', [null, newMedicine.id, 0]);
+            }
+            else {
+                for (const pId of pharmaciesToAdd) {
+                    await (0, database_1.query)('INSERT INTO inventory (pharmacy_id, medicine_id, quantity) VALUES ($1, $2, $3)', [pId, newMedicine.id, 0]);
+                }
             }
         }
         await (0, database_1.query)('COMMIT');

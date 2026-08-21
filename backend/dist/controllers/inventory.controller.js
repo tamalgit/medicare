@@ -15,7 +15,7 @@ const getInventory = async (req, res, next) => {
         // Find pharmacy associated with this user
         const pharmacyResult = await (0, database_1.query)('SELECT id FROM pharmacies WHERE user_id = $1', [userId]);
         if (pharmacyResult.rows.length === 0) {
-            if (req.user.role === 'SUPER_ADMIN') {
+            if (['SUPER_ADMIN', 'PHARMACY_ADMIN', 'ADMIN'].includes(req.user.role)) {
                 inventoryQuery += ` ORDER BY m.name ASC`;
             }
             else {
@@ -42,7 +42,7 @@ const updateStock = async (req, res, next) => {
         // Get pharmacy ID
         const pharmacyResult = await (0, database_1.query)('SELECT id FROM pharmacies WHERE user_id = $1', [userId]);
         let pharmacyId = pharmacyResult.rows.length > 0 ? pharmacyResult.rows[0].id : null;
-        if (!pharmacyId && req.user.role !== 'SUPER_ADMIN') {
+        if (!pharmacyId && !['SUPER_ADMIN', 'PHARMACY_ADMIN', 'ADMIN'].includes(req.user.role)) {
             return res.status(404).json({ success: false, message: 'Pharmacy not found' });
         }
         await (0, database_1.query)('BEGIN');

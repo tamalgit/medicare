@@ -18,7 +18,7 @@ export const getInventory = async (req: AuthRequest, res: Response, next: NextFu
         const pharmacyResult = await query('SELECT id FROM pharmacies WHERE user_id = $1', [userId]);
         
         if (pharmacyResult.rows.length === 0) {
-            if (req.user.role === 'SUPER_ADMIN') {
+            if (['SUPER_ADMIN', 'PHARMACY_ADMIN', 'ADMIN'].includes(req.user.role)) {
                 inventoryQuery += ` ORDER BY m.name ASC`;
             } else {
                 return res.status(200).json({ success: true, data: [] });
@@ -46,7 +46,7 @@ export const updateStock = async (req: AuthRequest, res: Response, next: NextFun
         const pharmacyResult = await query('SELECT id FROM pharmacies WHERE user_id = $1', [userId]);
         let pharmacyId = pharmacyResult.rows.length > 0 ? pharmacyResult.rows[0].id : null;
 
-        if (!pharmacyId && req.user.role !== 'SUPER_ADMIN') {
+        if (!pharmacyId && !['SUPER_ADMIN', 'PHARMACY_ADMIN', 'ADMIN'].includes(req.user.role)) {
             return res.status(404).json({ success: false, message: 'Pharmacy not found' });
         }
 
