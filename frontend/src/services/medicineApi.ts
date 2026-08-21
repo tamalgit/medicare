@@ -25,10 +25,6 @@ export const getManufacturers = async () => {
 };
 
 export const addMedicine = async (medicineData: any) => {
-    const response = await api.post('/medicines', medicineData, {
-        headers: {
-            'Content-Type': 'multipart/form-data'
-        }
-    });
+    const response = await api.post('/medicines', medicineData);
     return response.data;
 };
