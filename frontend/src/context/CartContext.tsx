@@ -10,7 +10,7 @@ export interface CartItem {
     image_url?: string;
 }
 
-interface CartContextType {
+interface CartContextType { 
     cart: CartItem[];
     addToCart: (item: CartItem) => void;
     removeFromCart: (medicine_id: string) => void;
