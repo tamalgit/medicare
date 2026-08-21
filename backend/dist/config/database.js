@@ -10,6 +10,11 @@ dotenv_1.default.config();
 const isLocal = process.env.DATABASE_URL
     ? process.env.DATABASE_URL.includes('localhost')
     : (process.env.PGHOST || '').includes('localhost');
+if (!process.env.DATABASE_URL && !process.env.PGHOST) {
+    console.error('FATAL ERROR: No database connection details found in environment variables!');
+    console.error('Please set either DATABASE_URL or PGHOST/PGUSER/PGPASSWORD/PGDATABASE in your Render Dashboard.');
+    process.exit(1);
+}
 exports.pool = new pg_1.Pool(process.env.DATABASE_URL
     ? { connectionString: process.env.DATABASE_URL, ssl: isLocal ? false : { rejectUnauthorized: false } }
     : {
