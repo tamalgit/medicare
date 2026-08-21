@@ -21,7 +21,7 @@ export const getInventory = async (req: AuthRequest, res: Response, next: NextFu
             if (req.user.role === 'SUPER_ADMIN') {
                 inventoryQuery += ` ORDER BY m.name ASC`;
             } else {
-                return res.status(404).json({ success: false, message: 'Pharmacy not found for this user' });
+                return res.status(200).json({ success: true, data: [] });
             }
         } else {
             const pharmacyId = pharmacyResult.rows[0].id;
