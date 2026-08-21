@@ -66,11 +66,19 @@ export const addMedicine = async (req: AuthRequest, res: Response, next: NextFun
                 pharmaciesToAdd = allPharmacies.rows.map(row => row.id);
             }
 
-            for (const pId of pharmaciesToAdd) {
+            if (pharmaciesToAdd.length === 0) {
+                // No pharmacies exist in the DB. Add a global inventory record with NULL pharmacy_id.
                 await query(
                     'INSERT INTO inventory (pharmacy_id, medicine_id, quantity) VALUES ($1, $2, $3)',
-                    [pId, newMedicine.id, 0]
+                    [null, newMedicine.id, 0]
                 );
+            } else {
+                for (const pId of pharmaciesToAdd) {
+                    await query(
+                        'INSERT INTO inventory (pharmacy_id, medicine_id, quantity) VALUES ($1, $2, $3)',
+                        [pId, newMedicine.id, 0]
+                    );
+                }
             }
         }
 
