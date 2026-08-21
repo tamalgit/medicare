@@ -1,10 +1,10 @@
-﻿{
+{
   "name": "Medicare-root",
   "version": "1.0.0",
   "description": "Root control for Medicare Booking Application",
   "type": "module",
   "scripts": {
-    "postinstall": "npm install --include=dev --prefix backend && npm install --prefix frontend",
+    "postinstall": "npm install --include=dev --prefix backend && npm install --include=dev --prefix frontend",
     "build":       "npm run build --prefix backend && npm run build --prefix frontend",
     "start":       "node backend/dist/server.js",
     "dev":         "node start.js"
