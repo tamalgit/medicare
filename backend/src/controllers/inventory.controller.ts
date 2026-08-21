@@ -6,22 +6,30 @@ export const getInventory = async (req: AuthRequest, res: Response, next: NextFu
     try {
         const userId = req.user.id;
         
-        // Find pharmacy associated with this user
-        const pharmacyResult = await query('SELECT id FROM pharmacies WHERE user_id = $1', [userId]);
-        if (pharmacyResult.rows.length === 0) {
-            return res.status(404).json({ success: false, message: 'Pharmacy not found for this user' });
-        }
-        
-        const pharmacyId = pharmacyResult.rows[0].id;
-
-        const inventoryResult = await query(`
+        let inventoryQuery = `
             SELECT i.*, m.name as medicine_name, m.sku, b.batch_number, b.expiry_date 
             FROM inventory i
             JOIN medicines m ON i.medicine_id = m.id
             LEFT JOIN medicine_batches b ON i.batch_id = b.id
-            WHERE i.pharmacy_id = $1
-            ORDER BY m.name ASC
-        `, [pharmacyId]);
+        `;
+        let params: any[] = [];
+
+        // Find pharmacy associated with this user
+        const pharmacyResult = await query('SELECT id FROM pharmacies WHERE user_id = $1', [userId]);
+        
+        if (pharmacyResult.rows.length === 0) {
+            if (req.user.role === 'SUPER_ADMIN') {
+                inventoryQuery += ` ORDER BY m.name ASC`;
+            } else {
+                return res.status(404).json({ success: false, message: 'Pharmacy not found for this user' });
+            }
+        } else {
+            const pharmacyId = pharmacyResult.rows[0].id;
+            inventoryQuery += ` WHERE i.pharmacy_id = $1 ORDER BY m.name ASC`;
+            params.push(pharmacyId);
+        }
+
+        const inventoryResult = await query(inventoryQuery, params);
 
         res.status(200).json({ success: true, data: inventoryResult.rows });
     } catch (error) {
@@ -36,10 +44,11 @@ export const updateStock = async (req: AuthRequest, res: Response, next: NextFun
 
         // Get pharmacy ID
         const pharmacyResult = await query('SELECT id FROM pharmacies WHERE user_id = $1', [userId]);
-        if (pharmacyResult.rows.length === 0) {
+        let pharmacyId = pharmacyResult.rows.length > 0 ? pharmacyResult.rows[0].id : null;
+
+        if (!pharmacyId && req.user.role !== 'SUPER_ADMIN') {
             return res.status(404).json({ success: false, message: 'Pharmacy not found' });
         }
-        const pharmacyId = pharmacyResult.rows[0].id;
 
         await query('BEGIN');
 
@@ -77,7 +86,12 @@ export const updateStock = async (req: AuthRequest, res: Response, next: NextFun
 
         if (inventoryId) {
             // Updating a specific row
-            const invResult = await query('SELECT id, quantity FROM inventory WHERE id = $1 AND pharmacy_id = $2', [inventoryId, pharmacyId]);
+            let invResult;
+            if (pharmacyId) {
+                invResult = await query('SELECT id, quantity FROM inventory WHERE id = $1 AND pharmacy_id = $2', [inventoryId, pharmacyId]);
+            } else {
+                invResult = await query('SELECT id, quantity FROM inventory WHERE id = $1', [inventoryId]);
+            }
             if (invResult.rows.length > 0) {
                 const currentQty = invResult.rows[0].quantity;
                 let newQty = currentQty;
@@ -92,6 +106,15 @@ export const updateStock = async (req: AuthRequest, res: Response, next: NextFun
                 throw new Error('Inventory record not found');
             }
         } else {
+            if (!pharmacyId) {
+                // Try to find the first pharmacy
+                const anyPharmacy = await query('SELECT id FROM pharmacies LIMIT 1');
+                if (anyPharmacy.rows.length > 0) {
+                    pharmacyId = anyPharmacy.rows[0].id;
+                } else {
+                    throw new Error('No pharmacy exists to add stock to');
+                }
+            }
             // Fallback for when no inventoryId is provided (e.g. from a different flow)
             let invResult = await query('SELECT id, quantity FROM inventory WHERE pharmacy_id = $1 AND medicine_id = $2 AND batch_id IS NOT DISTINCT FROM $3', 
                 [pharmacyId, medicineId, finalBatchId]);
