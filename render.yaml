@@ -18,3 +18,7 @@
         value: dJb0LB3hNpk5BeEneksdrmT9Nf01Y6CY
       - key: PGDATABASE
         value: medicare_mmiw
+    disk:
+      name: medicare-uploads
+      mountPath: /opt/render/project/src/backend/uploads
+      sizeGB: 1
