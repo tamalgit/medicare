@@ -39,6 +39,18 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'OK', message: 'API is running' });
 });
 
+// Serve frontend static files in production
+const frontendBuildPath = path.join(__dirname, '../../frontend/dist');
+app.use(express.static(frontendBuildPath));
+
+// Catch-all route to serve the React app for any other URL (client-side routing)
+app.get('*', (req, res, next) => {
+    if (req.url.startsWith('/api')) {
+        return next();
+    }
+    res.sendFile(path.join(frontendBuildPath, 'index.html'));
+});
+
 // Global Error Handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     console.error(err.stack);
