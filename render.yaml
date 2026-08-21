@@ -1,4 +1,4 @@
-services:
+﻿services:
   - type: web
     name: Medicare
     runtime: node
@@ -9,12 +9,12 @@ services:
       - key: NODE_ENV
         value: production
       - key: PGHOST
-        value: dpg-d8nqg9u7r5hc73b3tb2g-a.ohio-postgres.render.com
+        value: dpg-da3f642jnfac73ccqnig-a.ohio-postgres.render.com
       - key: PGPORT
         value: "5432"
       - key: PGUSER
-        value: drive
+        value: medicare
       - key: PGPASSWORD
-        value: uyjTSY5P3Z1N5TV3Dhw02SJA9G6qo8HD
+        value: dJb0LB3hNpk5BeEneksdrmT9Nf01Y6CY
       - key: PGDATABASE
-        value: driver_mqgo
+        value: medicare_mmiw
