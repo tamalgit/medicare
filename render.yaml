@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: Medicare
+    runtime: node
+    rootDir: .
+    buildCommand: npm install --include=dev --prefix backend && npm install --prefix frontend && npm run build --prefix backend && npm run build --prefix frontend
+    startCommand: node backend/dist/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PGHOST
+        value: dpg-d8nqg9u7r5hc73b3tb2g-a.ohio-postgres.render.com
+      - key: PGPORT
+        value: "5432"
+      - key: PGUSER
+        value: drive
+      - key: PGPASSWORD
+        value: uyjTSY5P3Z1N5TV3Dhw02SJA9G6qo8HD
+      - key: PGDATABASE
+        value: driver_mqgo
