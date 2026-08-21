@@ -100,6 +100,53 @@ export const Navbar = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Mobile Menu */}
+            {isMenuOpen && (
+                <div className="sm:hidden bg-[#0a2529] border-t border-white/10">
+                    <div className="px-4 pt-2 pb-4 space-y-1">
+                        <Link to="/" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-white/10">Medicines</Link>
+                        <Link to="/lab-tests" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-white/10">Lab Tests</Link>
+                        <Link to="/healthcare" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-white/10">Healthcare</Link>
+                        <Link to="/offers" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-yellow-400 hover:bg-white/10">Offers</Link>
+                    </div>
+                    
+                    {/* Mobile Auth Actions */}
+                    <div className="pt-4 pb-4 border-t border-white/10">
+                        {isAuthenticated ? (
+                            <div className="px-5 space-y-3">
+                                <div className="flex items-center">
+                                    <div className="w-10 h-10 bg-teal-500 text-white rounded-full flex items-center justify-center font-bold mr-3">
+                                        {user?.first_name?.charAt(0) || 'U'}
+                                    </div>
+                                    <div>
+                                        <div className="text-base font-medium text-white">{user?.first_name || 'User'}</div>
+                                        <div className="text-sm font-medium text-teal-200">{user?.email}</div>
+                                    </div>
+                                </div>
+                                <div className="mt-3 flex flex-col space-y-1">
+                                    <Link to="/customer/prescriptions/upload" onClick={() => setIsMenuOpen(false)} className="flex items-center px-3 py-2 rounded-md text-base font-medium text-teal-100 hover:text-white hover:bg-white/10">
+                                        <FileText className="w-5 h-5 mr-3" /> Upload Prescription
+                                    </Link>
+                                    <Link to="/orders" onClick={() => setIsMenuOpen(false)} className="flex items-center px-3 py-2 rounded-md text-base font-medium text-teal-100 hover:text-white hover:bg-white/10">
+                                        <Package className="w-5 h-5 mr-3" /> My Orders
+                                    </Link>
+                                    <button onClick={() => { logout(); setIsMenuOpen(false); }} className="flex items-center w-full text-left px-3 py-2 rounded-md text-base font-medium text-rose-400 hover:text-rose-300 hover:bg-white/10">
+                                        <LogOut className="w-5 h-5 mr-3" /> Sign Out
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="px-5">
+                                <Link to="/login" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center w-full px-5 py-3 bg-white text-[#10353a] hover:bg-teal-50 rounded-xl font-bold shadow-sm transition-colors">
+                                    <User className="w-5 h-5 mr-2" />
+                                    Sign In
+                                </Link>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </nav>
     );
 };
