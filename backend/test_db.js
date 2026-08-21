@@ -14,16 +14,22 @@ async function run() {
   
   // Test query
   try {
-    const medRes = await client.query(`SELECT * FROM medicines`);
-    console.log("Medicines:", medRes.rows.length);
-    if (medRes.rows.length > 0) console.log(medRes.rows[0]);
-
-    const pharmRes = await client.query(`SELECT * FROM pharmacies`);
-    console.log("Pharmacies:", pharmRes.rows.length);
-    if (pharmRes.rows.length > 0) console.log(pharmRes.rows[0]);
-
-    const invRes = await client.query(`SELECT * FROM inventory`);
-    console.log("Inventory Rows:", invRes.rows.length);
+    const invRes = await client.query(`
+        SELECT i.*, m.name as medicine_name, m.sku, b.batch_number, b.expiry_date 
+        FROM inventory i
+        JOIN medicines m ON i.medicine_id = m.id
+        LEFT JOIN medicine_batches b ON i.batch_id = b.id
+        ORDER BY m.name ASC
+    `);
+    console.log("Joined Inventory Rows:", invRes.rows.length);
+    if (invRes.rows.length > 0) {
+        console.log(invRes.rows[0]);
+    } else {
+        const checkMed = await client.query('SELECT COUNT(*) FROM medicines');
+        const checkInv = await client.query('SELECT COUNT(*) FROM inventory');
+        console.log("Raw Medicines Count:", checkMed.rows[0].count);
+        console.log("Raw Inventory Count:", checkInv.rows[0].count);
+    }
   } catch (err) {
     console.error("Query Error:", err);
   }
