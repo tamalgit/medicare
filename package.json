@@ -4,8 +4,8 @@
   "description": "Root control for Medicare Booking Application",
   "type": "module",
   "scripts": {
-    "render-build": "npm install --include=dev --prefix backend && npm install --include=dev --prefix frontend && npm run build --prefix backend && npm run build --prefix frontend",
-    "build":       "npm run build --prefix backend && npm run build --prefix frontend",
+    "render-build": "npm install --include=dev --prefix backend && npm install --include=dev --prefix frontend && npm --prefix backend run build && npm --prefix frontend run build",
+    "build": "npm run render-build",
     "start":       "node backend/dist/server.js",
     "dev":         "node start.js"
   }
