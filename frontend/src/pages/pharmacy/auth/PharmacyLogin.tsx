@@ -20,7 +20,7 @@ export const PharmacyLogin = () => {
         setIsLoading(true);
 
         try {
-            const data = await loginUser(email, password);
+            const data = await loginUser({ email, password });
             if (data.success) {
                 login(data.data.user, data.data.token);
                 // Check if user has pharmacy roles
