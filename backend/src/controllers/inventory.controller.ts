@@ -59,6 +59,12 @@ export const updateStock = async (req: AuthRequest, res: Response, next: NextFun
                      await query('UPDATE medicine_batches SET expiry_date = $1 WHERE id = $2', [expiryDate, finalBatchId]);
                 }
             } else {
+                if (!batchNumber) {
+                    return res.status(400).json({ success: false, message: 'Batch number is required when adding a new batch' });
+                }
+                if (!expiryDate) {
+                    return res.status(400).json({ success: false, message: 'Expiry date is required when adding a new batch' });
+                }
                 const newBatch = await query(
                     'INSERT INTO medicine_batches (medicine_id, batch_number, expiry_date) VALUES ($1, $2, $3) RETURNING id',
                     [medicineId, batchNumber, expiryDate]

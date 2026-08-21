@@ -32,22 +32,30 @@ const addMedicine = async (req, res, next) => {
         if (req.file) {
             imageUrl = `/uploads/medicines/${req.file.filename}`;
         }
+        const finalSku = sku || null;
         await (0, database_1.query)('BEGIN');
         const result = await (0, database_1.query)(`INSERT INTO medicines 
             (sku, name, brand_name, generic_name, manufacturer_id, category_id, strength, pack_size, mrp, selling_price, prescription_required, image_url, description, uses, directions, storage_info, safety_advice)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
             RETURNING *`, [
-            sku, name, brandName, genericName, manufacturerId, categoryId,
+            finalSku, name, brandName, genericName, manufacturerId, categoryId,
             strength, packSize, mrp, sellingPrice, prescriptionRequired,
             imageUrl, description, uses, directions, storageInfo, safetyAdvice
         ]);
         const newMedicine = result.rows[0];
-        // If the user has a pharmacy, add the medicine to their inventory with 0 quantity
+        // Add the medicine to the user's pharmacy, or all pharmacies if they don't have one
         if (req.user && req.user.id) {
             const pharmacyRes = await (0, database_1.query)('SELECT id FROM pharmacies WHERE user_id = $1', [req.user.id]);
+            let pharmaciesToAdd = [];
             if (pharmacyRes.rows.length > 0) {
-                const pharmacyId = pharmacyRes.rows[0].id;
-                await (0, database_1.query)('INSERT INTO inventory (pharmacy_id, medicine_id, quantity) VALUES ($1, $2, $3)', [pharmacyId, newMedicine.id, 0]);
+                pharmaciesToAdd.push(pharmacyRes.rows[0].id);
+            }
+            else {
+                const allPharmacies = await (0, database_1.query)('SELECT id FROM pharmacies');
+                pharmaciesToAdd = allPharmacies.rows.map(row => row.id);
+            }
+            for (const pId of pharmaciesToAdd) {
+                await (0, database_1.query)('INSERT INTO inventory (pharmacy_id, medicine_id, quantity) VALUES ($1, $2, $3)', [pId, newMedicine.id, 0]);
             }
         }
         await (0, database_1.query)('COMMIT');
