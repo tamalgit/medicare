@@ -12,11 +12,11 @@ INSERT INTO roles (name, description) VALUES
 -- Password is 'password123' (bcrypted)
 INSERT INTO users (first_name, last_name, email, mobile, password_hash, is_active)
 VALUES 
-('Super', 'Admin', 'admin@medicare.com', '9999999999', '$2b$10$Z4x7Cg0Ic1.YC7ROAi/zZO4CpcGT4qrgbRufLw4QqrpQt8cCmWlJ6', true),
-('Pharm', 'Admin', 'pharmacy@medicare.com', '8888888888', '$2b$10$Z4x7Cg0Ic1.YC7ROAi/zZO4CpcGT4qrgbRufLw4QqrpQt8cCmWlJ6', true),
-('John', 'Customer', 'john@example.com', '7777777777', '$2b$10$Z4x7Cg0Ic1.YC7ROAi/zZO4CpcGT4qrgbRufLw4QqrpQt8cCmWlJ6', true),
-('Jane', 'Pharmacist', 'pharmacist@medicare.com', '6666666666', '$2b$10$Z4x7Cg0Ic1.YC7ROAi/zZO4CpcGT4qrgbRufLw4QqrpQt8cCmWlJ6', true),
-('Speedy', 'Driver', 'driver@medicare.com', '5555555555', '$2b$10$Z4x7Cg0Ic1.YC7ROAi/zZO4CpcGT4qrgbRufLw4QqrpQt8cCmWlJ6', true);
+('Super', 'Admin', 'admin@medicare.com', '9999999999', '$2b$10$5ypj9KGef57xZkEErLL73eA7/dUNbiSxosIivhYj1SwfSoPMNQpj.', true),
+('Pharm', 'Admin', 'pharmacy@medicare.com', '8888888888', '$2b$10$5ypj9KGef57xZkEErLL73eA7/dUNbiSxosIivhYj1SwfSoPMNQpj.', true),
+('John', 'Customer', 'john@example.com', '7777777777', '$2b$10$5ypj9KGef57xZkEErLL73eA7/dUNbiSxosIivhYj1SwfSoPMNQpj.', true),
+('Jane', 'Pharmacist', 'pharmacist@medicare.com', '6666666666', '$2b$10$5ypj9KGef57xZkEErLL73eA7/dUNbiSxosIivhYj1SwfSoPMNQpj.', true),
+('Speedy', 'Driver', 'driver@medicare.com', '5555555555', '$2b$10$5ypj9KGef57xZkEErLL73eA7/dUNbiSxosIivhYj1SwfSoPMNQpj.', true);
 
 -- Link Users to Roles
 INSERT INTO user_roles (user_id, role_id) VALUES
